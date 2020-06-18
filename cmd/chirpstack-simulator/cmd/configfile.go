@@ -143,6 +143,8 @@ log_level={{ .General.LogLevel }}
 {{ range $index, $element := .Simulator }}
 [[simulator]]
 service_profile_id="{{ $element.ServiceProfileID }}"
+device_profile_id="{{ $element.DeviceProfileID }}"
+app_id="{{ $element.AppId }}"
 duration="{{ $element.Duration }}"
 
   [simulator.device]

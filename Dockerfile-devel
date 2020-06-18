@@ -10,3 +10,4 @@ RUN apk add --no-cache ca-certificates tzdata make git bash
 RUN mkdir -p $PROJECT_PATH
 COPY . $PROJECT_PATH
 WORKDIR $PROJECT_PATH
+ENTRYPOINT ["/chirpstack-simulator/run.sh"]

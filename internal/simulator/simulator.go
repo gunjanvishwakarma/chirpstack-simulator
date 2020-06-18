@@ -41,15 +41,24 @@ func Start(ctx context.Context, wg *sync.WaitGroup, c config.Config) error {
 			return errors.Wrap(err, "uuid from string error")
 		}
 
+		dpID, err := uuid.FromString(c.DeviceProfileID)
+		if err != nil {
+			return errors.Wrap(err, "uuid from string error")
+		}
+
 		pl, err := hex.DecodeString(c.Device.Payload)
 		if err != nil {
 			return errors.Wrap(err, "decode payload error")
 		}
 
+		appId := c.AppId
+
 		sim := simulation{
 			ctx:                  ctx,
 			wg:                   wg,
 			serviceProfileID:     spID,
+			deviceProfileID:      dpID,
+			appId:				  appId,
 			deviceCount:          c.Device.Count,
 			uplinkInterval:       c.Device.UplinkInterval,
 			fPort:                c.Device.FPort,
@@ -75,6 +84,8 @@ type simulation struct {
 	ctx              context.Context
 	wg               *sync.WaitGroup
 	serviceProfileID uuid.UUID
+	deviceProfileID  uuid.UUID
+	appId			 int64
 	deviceCount      int
 	gatewayMinCount  int
 	gatewayMaxCount  int
@@ -88,7 +99,7 @@ type simulation struct {
 	spreadingFactor int
 
 	serviceProfile       *api.ServiceProfile
-	deviceProfileID      uuid.UUID
+	deviceProfile        *api.DeviceProfile
 	applicationID        int64
 	gatewayIDs           []lorawan.EUI64
 	deviceAppKeys        map[lorawan.EUI64]lorawan.AES128Key
@@ -311,6 +322,21 @@ func (s *simulation) tearDownGateways() error {
 }
 
 func (s *simulation) setupDeviceProfile() error {
+	log.WithFields(log.Fields{
+		"device_profile_id": s.deviceProfileID,
+	}).Info("simulator: retrieving device-profile")
+	sp, err := as.DeviceProfile().Get(context.Background(), &api.GetDeviceProfileRequest{
+		Id: s.deviceProfileID.String(),
+	})
+	if err != nil {
+		return errors.Wrap(err, "get device-profile error")
+	}
+	s.deviceProfile = sp.DeviceProfile
+
+	return nil
+}
+
+/*func (s *simulation) setupDeviceProfile() error {
 	log.Info("simulator: creating device-profile")
 
 	dpName, _ := uuid.NewV4()
@@ -336,9 +362,13 @@ func (s *simulation) setupDeviceProfile() error {
 	s.deviceProfileID = dpID
 
 	return nil
-}
+}*/
 
 func (s *simulation) tearDownDeviceProfile() error {
+	return nil
+}
+
+/*func (s *simulation) tearDownDeviceProfile() error {
 	log.Info("simulator: tear-down device-profile")
 
 	_, err := as.DeviceProfile().Delete(context.Background(), &api.DeleteDeviceProfileRequest{
@@ -349,9 +379,23 @@ func (s *simulation) tearDownDeviceProfile() error {
 	}
 
 	return nil
-}
+}*/
 
 func (s *simulation) setupApplication() error {
+	log.Info("simulator: init application")
+
+	a, err := as.Application().Get(context.Background(), &api.GetApplicationRequest{
+		Id: s.appId,
+	})
+	if err != nil {
+		return errors.Wrap(err, "create applicaiton error")
+	}
+
+	s.applicationID = a.Application.Id
+	return nil
+}
+
+/*func (s *simulation) setupApplication() error {
 	log.Info("simulator: init application")
 
 	appName, err := uuid.NewV4()
@@ -373,9 +417,14 @@ func (s *simulation) setupApplication() error {
 
 	s.applicationID = createAppResp.Id
 	return nil
-}
+}*/
 
 func (s *simulation) tearDownApplication() error {
+	log.Info("simulator: tear-down application")
+	return nil
+}
+
+/*func (s *simulation) tearDownApplication() error {
 	log.Info("simulator: tear-down application")
 
 	_, err := as.Application().Delete(context.Background(), &api.DeleteApplicationRequest{
@@ -385,7 +434,7 @@ func (s *simulation) tearDownApplication() error {
 		return errors.Wrap(err, "delete application error")
 	}
 	return nil
-}
+}*/
 
 func (s *simulation) setupDevices() error {
 	log.Info("simulator: init devices")

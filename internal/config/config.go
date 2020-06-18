@@ -43,6 +43,8 @@ type Config struct {
 
 	Simulator []struct {
 		ServiceProfileID string        `mapstructure:"service_profile_id"`
+		DeviceProfileID string         `mapstructure:"device_profile_id"`
+		AppId int64 		   			`mapstructure:"app_id"`
 		Duration         time.Duration `mapstructure:"duration"`
 
 		Device struct {
